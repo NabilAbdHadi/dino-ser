@@ -2,6 +2,7 @@ import glob
 import os
 import pickle
 
+from pydub import AudioSegment
 import librosa
 import numpy as np
 import soundfile
@@ -11,7 +12,14 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
 
 
+def mono(file):
+    sound = AudioSegment.from_wav(file)
+    sound = sound.set_channels(1)
+    sound.export(file, format="wav")
+
+
 def extract_feature(file_name, mfcc=True, chroma=True, mel=True):
+    mono(file_name)
     with soundfile.SoundFile(file_name) as sound_file:
         X = sound_file.read(dtype="float32")
         sample_rate = sound_file.samplerate
@@ -77,30 +85,30 @@ def findBestModel(clf, x, y):
     print(clf.best_params_)
 
 
-x_train, x_test, y_train, y_test = load_data(test_size=0.25)
+def trainModel():
+    x_train, x_test, y_train, y_test = load_data(test_size=0.25)
 
-model = MLPClassifier(alpha=0.001,
-                      activation='tanh',
-                      batch_size=256,
-                      epsilon=1e-08,
-                      hidden_layer_sizes=(500,),
-                      learning_rate='adaptive',
-                      max_iter=875)
+    model = MLPClassifier(alpha=0.001,
+                          activation='tanh',
+                          batch_size=256,
+                          epsilon=1e-08,
+                          hidden_layer_sizes=(500,),
+                          learning_rate='adaptive',
+                          max_iter=875)
 
-# findBestModel(model, x_train, y_train)
+    # findBestModel(model, x_train, y_train)
 
-# result of findTheBest function
-# {'activation': 'tanh', 'hidden_layer_sizes': 400, 'learning_rate':
-# 'adaptive', 'max_iter': 875} --> mean(78.57%, 78.57%, 76.79%, 77.38%, 77.38%) = 77.738‬%
-# {'activation': 'tanh', 'alpha': 0.005, 'hidden_layer_sizes': 500,
-# 'learning_rate': 'constant', 'max_iter': 875} --> mean(79.17 %, 76.19%, 76.79%, 77.38%, 75.60%) = 77.03%
-# {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': 500, 'learning_rate': 'adaptive', 'max_iter': 875}
-#       --> mean(78.57%, 76.19%, 76.19%, 80.95%, 79.17%) = 78.214%
+    # result of findTheBest function
+    # {'activation': 'tanh', 'hidden_layer_sizes': 400, 'learning_rate':
+    # 'adaptive', 'max_iter': 875} --> mean(78.57%, 78.57%, 76.79%, 77.38%, 77.38%) = 77.738‬%
+    # {'activation': 'tanh', 'alpha': 0.005, 'hidden_layer_sizes': 500,
+    # 'learning_rate': 'constant', 'max_iter': 875} --> mean(79.17 %, 76.19%, 76.79%, 77.38%, 75.60%) = 77.03%
+    # {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': 500, 'learning_rate': 'adaptive', 'max_iter': 875}
+    #       --> mean(78.57%, 76.19%, 76.19%, 80.95%, 79.17%) = 78.214%
 
-
-model.fit(x_train, y_train)  # train data
-y_pred = model.predict(x_test)
-accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
-print("Accuracy: {:.2f}%".format(accuracy * 100))
-if accuracy > 0.8:
-    pickle.dump(model, open("Speech_emotion_recognition.model", "wb"))
+    model.fit(x_train, y_train)  # train data
+    y_pred = model.predict(x_test)
+    accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
+    print("Accuracy: {:.2f}%".format(accuracy * 100))
+    if accuracy > 0.81:
+        pickle.dump(model, open("Speech_emotion_recognition.model", "wb"))

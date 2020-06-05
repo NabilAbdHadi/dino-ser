@@ -1,6 +1,6 @@
 import joblib
 import numpy as np
-from SER import extract_feature
+from SER.SER_Model import *
 from collections import Counter
 
 model = joblib.load('Speech_emotion_recognition.model')
@@ -20,5 +20,3 @@ def prediction(filename):
     return most_frequent(predict)
 
 
-print(prediction('testfile.wav'))
-print(prediction('testfile2.wav'))

@@ -1,10 +1,14 @@
 import sys
-
 from PyQt5 import QtWidgets, QtGui, QtCore
+import pyaudio
+import wave
 
 
 class MainWindow:
+    finished = QtCore.pyqtSignal()
     def __init__(self):
+        super(MainWindow, self).__init__()
+        self.recording = True
         self.app = QtWidgets.QApplication(sys.argv)
         self.window = QtWidgets.QMainWindow()
 
@@ -101,10 +105,11 @@ class MainWindow:
         self.recButton = QtWidgets.QPushButton(self.window)
         self.recButton.setGeometry(70, 240, 100, 100)
         self.recButton.setIcon(self.recImage)
-        self.recButton.setIconSize(QtCore.QSize(80,80))
+        self.recButton.setIconSize(QtCore.QSize(80, 80))
         self.recButton.setStyleSheet("QPushButton { border-radius: 50px }"
                                      "QPushButton:pressed { background-color: #75756e }")
-        # self.recButton.clicked.connect() # self.on_click_rec
+        self.recButton.clicked.connect(self.on_click_rec)  # self.on_click_rec
+
 
         self.fileImage = QtGui.QIcon(self.filePath)
         self.fileButton = QtWidgets.QPushButton(self.window)
@@ -112,11 +117,43 @@ class MainWindow:
         self.fileButton.setIcon(self.fileImage)
         self.fileButton.setIconSize(QtCore.QSize(70, 70))
         self.fileButton.setStyleSheet("QPushButton { border-radius: 50px }"
-                                     "QPushButton:pressed { background-color: #75756e }")
+                                      "QPushButton:pressed { background-color: #75756e }")
         # self.fileButton.clicked.connect() # self.on_click_file
 
+    def on_click_rec(self, CHUNK=1024, FORMAT=pyaudio.paInt16,
+                     CHANNELS=1, RATE=44100, RECORD_SECONDS=5,
+                     WAVE_OUTPUT_FILENAME="output.wav", p=pyaudio.PyAudio()):
+
+        stream = p.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        frames_per_buffer=CHUNK)
+
+        print("* recording")
+
+        frames = []
+        int()
+        #for i in range(0, int(44100 / 1024 * 5)):
+        while self.recording:
+            data = stream.read(CHUNK)
+            frames.append(data)
+            self.recButton.clicked.connect(self.stop)
+        print("* done recording")
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+        wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+
+    def stop(self):
+        self.recording = False
+
     # @QtCore.pyqtSlot()
-    # def on_click_rec(self):
     #     # do rec-1st click
     #     # stop rec-2nd click and then do prediction then  display result
     #
